@@ -1,0 +1,814 @@
+글꼴 : D2 Coding
+
+	 MarkDown(#) 🥄 JMT 부산 맛집 프로그램 🍴 
+
+
+import cx_Oracle
+
+# 데이터베이스(Oracle)와 연동 작업 
+conn = cx_Oracle.connect("scott/tiger@localhost:1521/xe")
+
+# # cursor(커서) : 레코드 셋을 탐색하기 위해 사용하는 객체
+cursor = conn.cursor()
+
+# DB에 담겨있는 RT_List를 불러오는 쿼리문 실행
+
+sql_rt = "select * from RT_List"
+cursor.execute(sql_rt)
+RT_List = cursor.fetchall()
+for i in range(len(RT_List)):
+    print(RT_List[i])
+
+# DB에 담겨있는 RV_List를 불러오는 쿼리문 실행
+
+sql_rv = "select * from RV_List"
+cursor.execute(sql_rv)
+RV_List = cursor.fetchall()
+for i in range(len(RV_List)):
+    print(RV_List[i])
+
+
+
+
+
+
+	MarkDawn(##) 맛집 입력 프로그램(수진)👩
+
+List = []
+a = []
+b = []
+# DB에 가게명을 비교하는데 쓰기위한 함수
+def alist(data):  # data = RT_List 객체를 담아서 넘어온다.
+    for i in range(len(data)): # 입력 함수에 담으니 적용이안되서 따로 빼둠, 리스트에 담은 데이터 갯수만큼 반복처리된다.
+        name = data[i][1] 
+        a.append(name)
+        
+def blist(data): # RV구동을 위한 함수
+    for i in range(len(data)): 
+        name = data[i][0] 
+        b.append(name)
+
+#내부에서 레코드를 추가하는 작업 (RT정보들)
+def RT_Input():
+    num = len(RT_List) + 1  # 자동 번호설정
+    print("\t※등록시 모든 정보를 입력하세요※")
+    n = input("○ 식당명(호점 포함)을 입력하세요 : ")
+    j = input("○ 업종을 입력하세요 : ")
+    avg_s = 0
+    l = input("○ 지역을 입력하세요 : ")
+    
+    RT_new = [(num, n, j, avg_s, l)]
+    for row in RT_new:
+        plus_RT = "insert into RT_List values(:1, :2, :3, :4, :5)"
+        cursor.execute(plus_RT, row) 
+
+        conn.commit()  # 입력한 정보를 DB에 영구저장
+        
+# 신규 등록시, 입력된 이름과 식당이름을 비교해서 작동하는 메서드
+def RT_check():
+    sql_rt = "select * from RT_List"    # db자료를 불러와서 식당명을 리스트에 담기위한 작업
+    cursor.execute(sql_rt)
+    RT_List = cursor.fetchall()
+    alist(RT_List)
+    n = input("○ 식당명을 입력하세요 : ")
+    
+    if n in a:   # alist()참조
+        print("----------------------------------------------------")
+        print(" 이미 사용중인 가게명입니다. 정말 등록하시겠습니까?")
+        print(" [1]예              [2]아니요")
+        choice = input("선택 ⇒ ")
+        
+        if choice == '1':
+            RT_Input() # 내부에서 식당정보를 레코드에 추가시키는 함수
+            
+        elif choice == '2':
+            print("*이전 화면으로 돌아갑니다.*")
+            return RT_check()
+        
+        else:
+            print("“잘못 입력하셨습니다. 다시 선택해주세요.”")
+            return RT_check()
+    else:
+        print("----------------------------------------------------")
+        print(" 사용가능한 가게명입니다. 등록 하시겠습니까?")
+        print(" [1]예              [2]아니요")
+        choice = input("선택 ⇒ ")
+        
+        if choice == '1':
+            RT_Input()
+            
+        elif choice == '2':
+            print("*이전 화면으로 돌아갑니다.*")
+            return RT_check()
+        
+        else:
+            print("“잘못 입력하셨습니다. 다시 선택해주세요.”")
+            return RT_check()
+
+# 내부에서 레코드를 추가하는 작업 (RV정보들)
+
+def RV_Input():
+    n = name # 
+    print("\t※등록시 모든 정보를 입력하세요※")
+    i = input("○ 닉네임을 입력하세요 : ")
+    g = input("○ 성별을 남 또는 여로 입력하세요 : ")   
+    a = int(input("○ 나이대를 입력하세요 : "))
+    s = float(input("○ 1~5사이의 숫자로 별점을 입력하세요 : ")) # 실수도 가능
+    r = input("○ 리뷰를 작성해주세요 : ")
+    
+    rv_new = [(n, i, g, a, s, r)]
+    for row in rv_new:
+        plus_RV = "insert into RV_List values(:1, :2, :3, :4, :5, :6)"
+        cursor.execute(plus_RV, row)  # DB에 RV리스트를 담는 작업
+       
+        conn.commit()
+
+# 후기 등록시 해당되는 식당이름을 체크하기 위한 메서드
+
+def RV_check():
+    sql_rt = "select * from RT_List"
+    cursor.execute(sql_rt)
+    RT_List = cursor.fetchall()   # DB에 저장된 식당리스트를 리스트에 담음
+    alist(RT_List)
+    
+    global name # RV_Input함수에서 바로 받으려고 전역변수로 설정함
+    name = input("○ 후기를 남기고자 하는 맛집을 입력하세요 : ")
+    
+    if name in a:  # a는 RT리스트에 존재하는 가게명을 담은 리스트
+        RV_Input()  # 작성한 리뷰를 레코드에 추가하는 함수
+        
+    else:
+        print("“존재하지 않는 맛집입니다. 신규 등록 후 이용해주세요.”")
+
+
+# 메뉴 메서드
+
+def showMenu_1():
+    print("\n ―――――― 맛집 입력 프로그램 ――――――")
+    print("① 맛집 등록")
+    print("② 맛집 후기")
+    print("③ 메뉴 종료")
+    print("―――――――――――――――――――――――――――――――――")
+
+# 프로그램 실행 메서드
+
+def jmtProgram():
+    while 1:
+        showMenu_1()
+        menu = input("선택 ⇒ ")
+        if menu == '1':
+            RT_check()
+            sql_rt = "select * from RT_List"
+            cursor.execute(sql_rt)
+            RT_List = cursor.fetchall()
+            alist(RT_List)  # 위에 쿼리 실행결과를 담고 있는 리스트객체를 파라미터로 넘겨주는 작업
+            print(" 정상적으로 등록되었습니다 :) ")
+            
+        elif menu =='2':
+            RV_check()
+            sql_rv = "select * from RV_List"
+            cursor.execute(sql_rv)
+            RV_List = cursor.fetchall()
+            blist(RV_List)
+            print(" 리뷰 작성이 완료되었습니다 :) ")
+            
+        elif menu == '3':
+            print("\t♡ 맛집 입력 메뉴를 종료합니다. ♡ ")
+            break
+            
+        else:
+            print("“잘못 입력하셨습니다.”")
+            return jmtProgram()
+
+
+
+
+
+
+	MarkDown(##)  맛집 검색 프로그램(동률)👨‍
+
+
+# 식당 정보 리스트를 불러오는 함수
+
+def set_RT_List():
+    sql_RT = "select * from RT_List"   # 식당정보 테이블에 있는 정보를 불러오는 sql문
+    cursor.execute(sql_RT)   # 위 sql문을 실행시키는 execute함수
+    RT_List = cursor.fetchall()  # fetchall로 실행된 sql문의 정보를 RT_List에 담는다.
+    return RT_List
+
+
+# 식당 리뷰 리스트를 불러오는 함수
+
+def set_RV_List():  # 식당 리뷰 테이블에 있는 정보를 불러오는 sql문
+    sql_RV = "select * from RV_List"  
+    cursor.execute(sql_RV)
+    RV_List = cursor.fetchall()
+    return RV_List
+
+
+# 가게이름으로 평균점수 구하기
+
+def avg_RV_List(RT_name):  # a 는 식당이름
+    RV_L = set_RV_List() # RV_L에 식당리뷰 리스트를 담는 작업
+    List = []  # 빈 리스트 공간을 생성
+    
+    for i in range(len(RV_L)): # 식당리뷰 리스트의 길이 만큼 반복
+        
+        if RV_L[i][0]== RT_name:  # 식당리뷰 리스트의 이름과 입력받은 이름이 같다면
+            List.append(RV_L[i])  # 해당 식당리뷰를 빈 리스트 공간에 담는다.
+    
+    tot = 0  # 평점의 합의 초기값을 0으로 둠.
+    
+    for j in List:   # 위에 생성된 리스트를 한줄씩 반복하는 반복문
+        tot += j[4]   # 총점은 해당 식당 평점의 합
+    avg = tot/len(List)   # 해당 식당 평점의 합을 위에 리스트에 담긴 식당 리뷰의 갯수로 나눈다.
+            
+    return avg
+
+# 식당명을 받아 식당 정보를 출력해주는 함수
+
+def RT_info(RT_name):
+    RT_L = set_RT_List()  # 식당 정보리스트를 변수명 RT_L에 담음.
+    check = 0   # 유효성 검사
+    
+    for i in range(len(RT_L)):  # 식당 정보리스트의 길이만큼 반복
+        if RT_name == RT_L[i][1]:   # 입력받은 식당이름과 식당정보리스트에 있는 식당이름이 같으면
+            print("종류 : {0}, 평균평점 : {1:.1f}, 위치 : {2}"      # <== 해당 정보들을 출력
+                  .format(RT_L[i][2], avg_RV_List(RT_name), RT_L[i][4]))  
+            check = 1   # 해당 과정을 한번이라도 거치면 check값이 0으로 바뀜
+                  
+    if check == 0:   # 유효성 검사에서 check가 0으로 유지되면 
+        print("해당 이름의 식당이 존재하지 않습니다.")  # 해당 프린트문이 나오도록 구현
+
+        
+# 식당명을 받아 리뷰를 출력해주는 함수
+
+def RV_info(RT_name): 
+    RV_L = set_RV_List() # 식당 리뷰리스트를 변수명 RV_L에 담음
+    
+    check = 0 # 유효성 검사
+    
+    for i in range(len(RV_L)): # 식당 리뷰리스트의 길이만큼 반복
+        if RT_name == RV_L[i][0]: # 입력받은 식당이름과 식당리뷰리스트에 있는 식당이름이 같으면
+            print("닉네임 : {0}, 성별 : {1}, 나이대 : {2}, 평점 : {3}, 후기 : {4}"   
+                  .format(RV_L[i][1], RV_L[i][2], RV_L[i][3], RV_L[i][4], RV_L[i][5])) 
+            check = 1
+                  
+    if check == 0:
+        print("해당 이름의 식당이 존재하지 않습니다.")
+        
+            
+            
+# 식당 이름검색 함수
+
+def nameSearch():
+    RT_L = set_RT_List() # 식당 정보 리스트를 RT_L에 담음
+    
+    check = 0 # 유효성 검사
+    
+    if len(RT_L) != 0:
+        RT_name = input("○ 식당 이름 : ") # RT_name에 식당이름을 담음
+        
+        for i in range(len(RT_L)):
+            
+            if RT_name == RT_L[i][1]:
+                print("종류 : {0}, 평균평점 : {1:.2f}, 위치 : {2}"
+                      .format(RT_L[i][2], avg_RV_List(RT_name), RT_L[i][4]))
+                check = 1
+                
+                print("\n========== 리뷰 ==========")  
+                RV_L = set_RV_List() # RV_L에 식당 리뷰 리스트를 담음
+                
+                for i in range(len(RV_L)):
+                    if RT_name == RV_L[i][0]:
+                        print("닉네임 : {0}, 성별 : {1}, 나이대 : {2}, 평점 : {3}, 후기 : {4}"
+                              .format(RV_L[i][1], RV_L[i][2], RV_L[i][3], RV_L[i][4], RV_L[i][5]))
+            
+        if check == 0:
+            print("해당 식당의 이름이 존재하지 않습니다.")
+    
+    else:
+        print("등록된 식당의 정보가 존재하지 않습니다.")
+
+# 식당 별점 검색 함수(a 이상 b 미만 사이에 있는 별점대의 식당을 검색)
+
+def starSearch_sub(a, b):
+    RT_L = set_RT_List()    
+    check = 0
+                  
+    for i in range(len(RT_L)):
+        RT_name = RT_L[i][1]
+        
+        if a <= avg_RV_List(RT_name) < b:
+            print("식당 : {0}, 종류 : {1}, 평균평점 : {2:.1f}, 위치 : {3}"
+                  .format(RT_L[i][1], RT_L[i][2], avg_RV_List(RT_name), RT_L[i][4]))
+            check = 1
+            
+    if check == 1:
+        print("========================")
+        print("[1]리뷰보기 [2]돌아가기")
+        RT_num = int(input("○ 원하는 메뉴를 선택해주세요 : "))
+        
+        if RT_num == 1: # 해당 별점의 식당중 한 곳의 리뷰를 볼수있게 하도록 구현
+            RT_name = input("\n○ 식당의 이름을 입력해주세요 : ")
+            RV_info(RT_name) # 식당 리뷰를 출력하는 함수 
+
+        elif RT_num == 2:
+            pass
+        
+        else:
+            print("“잘못 입력하셨습니다.”")
+
+    if check == 0:
+        print("해당 별점대의 식당이 존재하지 않습니다.")
+
+# 식당 별점으로 검색하는 프로그램
+
+def starSearch():
+    while True:
+        print("\n==== 별점대를 선택하세요 =====")
+        print("1. 0 ~ 1점대")
+        print("2. 1 ~ 2점대")
+        print("3. 2 ~ 3점대")
+        print("4. 3 ~ 4점대")
+        print("5. 4 ~ 5점대")
+        print("6. 별점검색종료")
+        print("===============================")
+
+        starNum = input("선택 : ") # int로 숫자를 받지 않은 이유는 실수로 문자를 입력했을때 오류가 뜨는것을 방지하기 위해
+
+        if starNum == "1":
+            starSearch_sub(0, 1)
+                
+
+        elif starNum == "2":
+            starSearch_sub(1, 2)
+                
+
+
+        elif starNum == "3":
+            starSearch_sub(2, 3)
+                
+
+
+        elif starNum == "4":
+            starSearch_sub(3, 4)
+                
+
+        elif starNum == "5":  # 4점 이상 5점 이하로 부등호가 하나 달라서 starSearch_sub(a, b) 함수를 쓰지 않음.
+            check = 0
+            RT_L = set_RT_List()    
+
+            for i in range(len(RT_L)):
+                RT_name = RT_L[i][1]
+                
+                if 4 <= avg_RV_List(RT_name) <= 5:
+        
+                    print("식당 : {0}, 종류 : {1}, 평균평점 : {2:.1f}, 위치 : {3}"
+                          .format(RT_L[i][1], RT_L[i][2], avg_RV_List(RT_name), RT_L[i][4]))
+                    check = 1
+                
+            if check == 1:
+                print("========================")
+                print("[1]리뷰보기 [2]돌아가기")
+                RT_num = int(input("○ 원하는 메뉴를 선택해주세요 : "))
+                
+                if RT_num == 1:
+                    RT_name = input("\n○ 식당의 이름을 입력해주세요 : ")
+                    RV_info(RT_name)
+
+                elif RT_num == 2:
+                    pass
+
+                else:
+                    print("“잘못 입력하셨습니다.”")
+
+            if check == 0:
+                print("해당 별점대의 식당이 존재하지 않습니다.")
+                
+
+        elif starNum == "6":
+            break
+
+
+
+        else:
+            print("“잘못 입력하셨습니다.”")
+
+# 위치로 검색하는 기능
+
+def locSearch():
+    
+    check = 0 # 유효성 검사
+    
+    loc = input("○ 장소를 입력하세요 : ")
+    
+    RT_L = set_RT_List() # 리뷰리스트를 RT_L에 담음
+    
+    for i in range(len(RT_L)):
+        
+        if loc == RT_L[i][4]:
+            print("식당 : {0}, 종류 : {1}, 평균평점 : {2:.1f}"
+                  .format(RT_L[i][1], RT_L[i][2], avg_RV_List(RT_L[i][1])))
+            check = 1
+            
+    if check == 1:
+        print("========================")
+        print("[1]리뷰보기 [2]돌아가기") # 해당 장소의 식당중 한곳의 리뷰를 볼수있도록 구현
+        RT_num = int(input("○ 원하는 메뉴를 선택해주세요 : "))
+    
+        if RT_num == 1:
+            RT_name = input("\n○ 식당의 이름을 입력해주세요 : ")
+            RV_info(RT_name)
+
+        elif RT_num == 2:
+            pass
+        
+        else:
+            print("“잘못 입력하셨습니다.”")
+                
+    if check == 0:
+                print("해당 장소의 식당이 존재하지 않습니다.")
+
+# 맛집 검색 프로그램 메인메뉴
+
+def RT_search():    
+    while True:
+        print("\n―――――― 맛집 검색 프로그램 ――――――")
+        print("① 이름으로 검색")
+        print("② 별점으로 검색")
+        print("③ 지역별로 검색")
+        print("④ 메뉴 종료")
+        print("―――――――――――――――――――――――――――――――――")
+        
+        searchNum = input("선택 ⇒ ") 
+        
+        if searchNum == "1":
+            nameSearch()
+                
+        elif searchNum == "2":
+            starSearch()
+        
+        elif searchNum == "3":
+            locSearch()
+        
+        elif searchNum == "4":
+            print("\t ♡ 맛집 검색 메뉴를 종료합니다. ♡ ")
+            break
+            
+        else:
+            print("“잘못 입력하셨습니다.”")
+    
+
+
+
+
+
+
+	MarkDown(##) 맛집 추천 프로그램(지영)👩‍🔧
+
+# 2. 메뉴를 출력하는 함수
+
+import random  
+        
+# 메뉴를 출력하는 함수
+
+def showMenu_2():
+        print('\n―――――― 맛집 추천 프로그램 ――――――')
+        print('1. 종류로 추천 ')
+        print('2. 별점으로 추천')
+        print('3. 지역으로 추천')
+        print('4. 성별로 추천')
+        print('5. 나이대로 추천')
+        print('6. 무작위로 추천')
+        print('7. 메뉴 종료')
+        print('―――――――――――――――――――――――――――――――――')
+
+# 3. DB에 있는 식당 정보를 다 갖고와서 리스트 생성
+
+##RT_List 만들기
+
+def set_RT_List():
+    
+    sql_RT = "select * from RT_List" # 명령문을 sql_RT 에 저장 (변수 생성)
+    cursor.execute(sql_RT)  # 명령어를 실행시켜 python으로 갖고오기 (통로 연결)
+    RT_List = cursor.fetchall()  # 모든 DB를 RT_List(List)에 저장
+    return RT_List
+    
+
+## RV_List 만들기
+
+def set_RV_List():
+    sql_RV = "select * from RV_List"
+    cursor.execute(sql_RV)
+    RV_List = cursor.fetchall()
+    return RV_List
+
+
+# 4. 인덱스로 리스트 만들기(입력한 항목을 가지고 리스트 만들기)
+
+## RT_List에 저장된 num: 인덱스, a : 인덱스의 내용
+def get_RT_List(num, a):
+        RT_List = set_RT_List()  # 실행한 함수를 RT_List에 저장
+        List=[] # 빈 List 생성
+        
+        for i in range(len(RT_List)): # RT_List에 저장한 된 길이만큼 반복
+            if RT_List[i][num]== a : # RT_List의 리스트 i번째,튜플의 num 번째(정보를 불러올 때 튜플로 저장됨)
+                                     # a 는 num 번째 저장된 내용
+                List.append(RT_List[i])  # 내가 입력한 a와  (i, num)번째의 내용이 같으면 리스트에 저장
+        return List
+
+    
+## num: 인덱스, a : 인덱스의 내용
+
+def get_RV_List(num, a):
+        RV_List = set_RV_List()
+        List=[]
+        
+        for i in range(len(RV_List)):
+            if RV_List[i][num]== a :
+                 List.append(RV_List[i])
+        return List
+
+
+# 5. 입력(Input) 유효성 검사 
+
+def RT_Check(X, num, a): # X는 메뉴별로 잘못 입력 됐을 때 출력될 프린트문, num = 인덱스 순서, a = 인데스 내용 (랜덤추천 함수 돌릴떼 입력)
+    check = 0
+    RT_List = set_RT_List() # 실행한 함수를 RT_List로 변수 지정
+    
+    for i in range(len(RT_List)):
+        if  RT_List[i][num] == a:
+            check = 1 # 같으면 check 가 1로 변경
+            
+    if check == 0: # 같은게 하나도 없으면 0 유지, 0이면 프린트문 출력
+        return(X)
+    
+def RV_Check(X, num, a):
+    check = 0
+    RV_List = set_RV_List()
+    
+    for i in range(len(RV_List)):
+        if  RV_List[i][num] == a:
+            check = 1
+            
+    if check == 0:
+        return(X)
+
+#6. 4번에서 만든 리스트를 가지고 랜덤으로 하나 추출
+
+def RT_Random(num, a): # RT_List 랜덤 함수
+    List = get_RT_List(num, a)    # 입력한 a와 인덱스 2 (종류)와 같은것을 List에 담기
+    RD_List = random.choice(List) # List 중에 랜덤으로 추첨
+    print('☞ 추천 맛집은 『{}』입니다~!'.format(RD_List[1])) # RT_Lsit 의 랜덤
+    RT_info(RD_List[1])   # 식당 이름을 받아 식당 정보를 출력하는 함수
+    
+def RV_Random(num, a): # RV_List 랜덤함수
+    List = get_RV_List(num,a)
+    RD_List = random.choice(List)
+    print('☞ 추천 맛집은 『{}』입니다~!'.format(RD_List[0]))
+    RT_info(RD_List[0])
+    
+
+
+    
+# 6-1 (1). 별점을 기준으로 랜덤뽑기 해주는 함수
+   
+def randomStar_range(num): # num은 밑 함수 실행시 지정되어 있는 숫자
+    RT_L = set_RT_List()   # RT_List를 생성하는 함수를 실행 후 RT_L로 변수 지정    
+    List = []
+    
+    for i in range(len(RT_L)):
+        RT_name = RT_L[i][1]  # 각 튜플의 식당이름을  RT_name 변수 지정
+        
+        if num <= avg_RV_List(RT_name): # 숫자가 입력받은 숫자가 평균 구하는 함수 이상이면 
+            List.append([RT_name, avg_RV_List(RT_name)])  # 이름과 평군이 List에 저장
+            
+    RD_List = random.choice(List) # List에서 랜덤으로 추천된 것을 RD_List로 변수 지정
+                                  # 시퀀스 객체에서 요소를 무작위로 선택할 수있는 모듈
+        
+    print("☞ 추천맛집은 {}입니다~!(평점 : {:.1f})".format(RD_List[0], RD_List[1])) # 0번이 이름, 1번이 평균점수/출력
+    RT_info(RD_List[0]) # 식당명을 받아 식당 정보를 출력해주는 함수/ 추천된 식당 이름으로 함수실행
+    
+
+# 6-1(2). 별점을 기준으로 랜덤뽑기 해주는 함수 메뉴
+
+def randomStar():
+    print("==== 별점으로 랜덤추천 ====")
+    print("1. 0점 이상")
+    print("2. 1점 이상")
+    print("3. 2점 이상")
+    print("4. 3점 이상")
+    print("5. 4점 이상")
+    print("6. 5점")
+    print("===========================")
+
+    numStar = input("원하시는 별점대를 고르세요 : ")
+
+    if numStar == "1":
+
+        randomStar_range(0) # 위 함수의 num = 0 ∴ 평균이 0보다 큰 것들 중 하나를 추천
+
+    elif numStar == "2":
+
+        randomStar_range(1)
+
+    elif numStar == "3":
+
+        randomStar_range(2)
+
+    elif numStar == "4":
+
+        randomStar_range(3)
+
+    elif numStar == "5":
+
+        randomStar_range(4)
+
+    elif numStar == "6": # randomStar_range() 는 이상일때만 불러 오게 만들어서 
+
+        RT_L = set_RT_List()    
+        List = []
+        
+        for i in range(len(RT_L)):
+            RT_name = RT_L[i][1]
+            
+            if 5 == avg_RV_List(RT_name): # 평균이 5와 같을 때 (5점대가 최고점 이라서 )
+                List.append([RT_name, avg_RV_List(RT_name)])
+                
+        RD_List = random.choice(List)
+        print("☞ 추천맛집은 {}입니다~!(평점 : {:.1f})".format(RD_List[0], RD_List[1]))
+        RT_info(RD_List[0])
+        
+    else:
+        print("“잘못 입력하셨습니다.”") # 1, 2, 3, 4, 5, 6 말고 다른거 입력시 출력
+    
+
+# 6-2(1)나이별로 랜덤 추천
+
+def randomAge():
+    print("==== 나이별로 랜덤추천 ====")
+    print("1. 10대")
+    print("2. 20대")
+    print("3. 30대")
+    print("4. 40대")
+    print("5. 50대")
+    print("6. 60대")
+    print("===========================")
+    
+    numAge = input("원하시는 나이대를 고르세요 : ")
+    num = 3 # RV_List 튜플의 인덱스 
+    if numAge == '1' :
+        a = 10
+        RV_Random(num, a)
+    elif numAge == '2':
+        a = 20
+        RV_Random(num, a)
+    elif numAge == '3':
+        a = 30
+        RV_Random(num, a)
+    elif numAge == '4':
+        a = 40
+        RV_Random(num, a)
+    elif numAge == '5':
+        a = 50
+        RV_Random(num, a)
+    elif numAge == '6':
+        a = 60
+        RV_Random(num, a)
+    else:
+        print("잘못 입력하셨습니다.")
+
+# 7. 랜덤추천 함수
+
+def Random():    
+    while 1:
+        showMenu_2()
+        
+        menu = input("메뉴 = ")  # 메뉴 순서를 입력받음
+
+        if menu == '1': # 문자로 입력을 잘못 받았을 때 잘못 입력 했다고 하기위해서 문자로 문자로 변경
+
+            num = 2 # 튜플의 인덱스
+            print('○ 추천받고 싶은 업종(한식, 일식, 양식, 중식, 카페, 기타 中 1)을 입력하세요 : ')
+            
+            while True:  # 잘못 입력 받았는지 확인
+                a = input()
+                X = '“업종을 잘못 입력하셨습니다.”' # 변수지정
+                
+                if RT_Check(X, num, a) == X: # Check 함수가 입력받은 a 와 다르면 X가 return된것.
+                    print(X) # so 잘못 입력 받으면 X 출력
+                    
+            #def RV_Check(X, num, a):
+            #check = 0
+            #RV_List = set_RV_List()
+            #for i in range(len(RV_List)):
+            #    if RV_List[i][num] == a:
+            #        check = 1
+            #if check == 0:
+            #    return(X)
+                    
+                else:
+                    break # 잘 입력 되었으면 다음으로 넘어감
+                    
+            RT_Random(num, a)
+            
+
+        elif menu == '2':
+            randomStar()
+            
+
+        elif menu == '3':
+            num = 4 # 인데스 4가 지역
+            print('○ 추천받고 싶은 지역을 입력하세요 : ')
+            
+            while True:
+                a = input()
+                X = '“없는 지역입니다. 다시 입력해 주세요”'
+                
+                if RT_Check(X, num, a) == X:
+                    print(X)
+                    
+                else:
+                    break
+                    
+            RT_Random(num, a)
+            
+
+        elif menu == '4':
+            num = 2 # RV 의 인덱스 2 는 성별
+            print("○ 추천받고 싶은 성별(여 or 남)을 입력하세요 : ")
+            
+            while True:
+                a = input()
+                X = '“여 or 남 중 하나를 입력하세요.”'
+                if RV_Check(X, num, a) == X:
+                    print(X)
+                    
+                else:
+                    break
+                    
+            RV_Random(num, a)
+   
+
+        elif menu == '5':
+           randomAge()
+            
+            
+        elif menu == '6': # 모든 정보중에 하나 추천
+            RT_List = set_RT_List()
+            RD_List = random.choice(RT_List)
+            print('☞ 추천 맛집은 『{}』입니다~!'.format(RD_List[1]))
+            RT_info(RD_List[1])
+            
+
+        elif menu == '7':
+            break
+            
+            
+        else:
+            print("메뉴를 잘못 입력하셨습니다. 숫자를 입력해 주세요.") # 추천메뉴 외의 것을 입력시 출력
+            
+            
+    print("\t ♡ 맛집 추천 메뉴를 종료합니다. ♡ ")
+
+
+
+
+
+
+	MarkDown(##) 맛집 메인 프로그램 🍜
+        
+while True:
+    print("\n ━━━━━◄◀ 부산 JMT 맛집 ▶►━━━━━ ")
+    print("① 맛집 입력 메뉴")
+    print("② 맛집 검색 메뉴")
+    print("③ 맛집 추천 메뉴")
+    print("④ 프로그램 종료")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    
+    num = int(input("메뉴 ▸ "))
+    
+    if num == 1:
+        jmtProgram()
+        
+    elif num == 2:
+        RT_search()
+        
+    elif num == 3:
+        Random()
+    
+    elif num == 4:
+        print("\t ♥ 좀맛탱 프로그램을 종료합니다. ♥ ")
+        break
+        
+    else:
+        print("“잘못 입력하셨습니다.”")
+        
+    
+
+
+
+
+        
+‍
